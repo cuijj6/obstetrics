@@ -1,0 +1,5 @@
+^README\.Rmd$
+^data/raw-data$
+^.*\.Rproj$
+^\.Rproj\.user$
+^INPUT$

@@ -1,0 +1,21 @@
+.Rproj.user
+.Rhistory
+
+# DATA
+temp/
+INPUT/
+data/
+data/raw-data
+*.xlsx
+*.csv
+*.txt
+
+# FIGURE
+*.pdf
+*.png
+
+# RMARKDOWN
+*.tex
+*.log
+*.html
+*.docx
