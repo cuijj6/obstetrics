@@ -48,12 +48,15 @@ extractBasicInfo <- function(d){
     d$年龄 %<>% gsub("^(Y|y)", "", .) %>% as.numeric()
     
     names <- names(d)
-    headvars <- c("住院号", "上次住院号", "本次住院号") %>% intersect(names)
+    headvars <- c("住院号", "上次住院号", "本次住院号", "住院流水号") %>% intersect(names)
 
     info <- cbind(d[, .SD, .SDcols = c(headvars, "患者姓名", "出生日期", "年龄", "分娩日期",
                    "婴儿1性别", "婴儿1体重", "婴儿1呼吸", "婴儿1转归",
                    "婴儿2性别", "婴儿2体重", "婴儿2呼吸", "婴儿2转归")],
              info_period, info_BMI, out_judge, out_judge_diabetes, his_diabetes)
+    varnames_new <- c(headvars, "name", "date_birth", "age", "date_delivery")
+    colnames(info)[1:length(varnames_new)] <- varnames_new
+
     info
 }
 

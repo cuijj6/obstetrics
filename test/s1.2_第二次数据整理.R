@@ -12,7 +12,9 @@ I_match <- match2(lst2$current$上次住院号 %>% as.numeric(), lst2$previous$�
 lst2$current  %<>%  .[I_match$I_x, ]
 lst2$previous %<>%  .[I_match$I_y, ]
 
-write_list2xlsx(lst2, "INPUT/中大附一GDM复发.xlsx")
+lst2$previous[, `住院流水号` := `本次住院号`]
+
+write_list2xlsx(lst2, "INPUT/中大附一GDM复发-20190810.xlsx")
 
 # fwrite2(info, "baseInfo.csv")
 ## 检查列名变化

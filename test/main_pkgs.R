@@ -10,4 +10,6 @@ suppressMessages({
     library(readxl)
 
     library(purrr)
+    library(foreach)
+    library(iterators)
 })
