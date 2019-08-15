@@ -44,35 +44,78 @@ df_current <- lst$current[, .(id_full, age, weight_before, weight, height, out_j
                bmi_before = weight_before/(height/100)^2)]
     df <- df[, -(1:12)] %>% reorder_name(c("is_diab", "bmi", "bmi_before"))
 
-    d <- df[, .(y, bmi, bmi_before,
+    names <- c("A1C", "CHOL", "TG", "LDL", "HDL", "urine.sugar", "urine.protein", "GLU")
+    d1 <- df[, .(`血红蛋白A1c(HBA1c).x`,
                 `总胆固醇CHOL.x`, `甘油三酯TG.x`, `高密度胆固醇HDL-c.x`, `低密度胆固醇LDL-c.x`,
-                `尿糖(干化学)`, `尿蛋白(干化学)`, `葡萄糖GLU` = as.numeric(`葡萄糖GLU`))]
+                `尿糖(干化学)`, `尿蛋白(干化学)`, `葡萄糖GLU` = as.numeric(`葡萄糖GLU`))] %>%
+        set_colnames(names)
+    d <- df[, .(y, age, bmi, bmi_before)] %>% cbind(d1)
+
     # d[, 5:7] %<>% map(table)
-    d$`尿糖(干化学)` %<>% yinyang(to.num = TRUE)
-    d$`尿蛋白(干化学)` %<>% yinyang(to.num = TRUE)
+    d$urine.sugar %<>% yinyang(to.num = TRUE)
+    d$urine.protein %<>% yinyang(to.num = TRUE)
 
     # d <- df[, .(y = as.factor(`is_diab`), bmi, bmi_before,
     #             `OGTT空腹血糖.x`, `OGTT血糖.1.h.x`, `OGTT血糖.2.h.x`)]
     d
 }
+
+imageF(d[, -1], main = 'Missing values in INPUT')
 # d[, y2 := as.numeric(`OGTT空腹血糖.x` >= 5.1 | `OGTT血糖.1.h.x` >= 10 | `OGTT血糖.2.h.x` >= 8.5)]
 
-m <- opls(d[, -1], d[, y], predI = 1, orthoI = NA)
+
+## 1. method1-OPLS
+m <- opls(d[, -1], d[, y], predI = 2, orthoI = 1)
+
 tbl <- table(fit = fitted(m), ref = d[, y])
-precision(tbl)
+# precision(tbl)
+recall(tbl, relevant = "1")
 
 # recall: 预测正确的样本数
 # precision:
 
-info <- map(lst[2:3], group_diab) %>% map("is_diab") %>% as.data.table()
-tbl  <- table(info)
+## 2. method2-PCA
+m <- opls(d[, -1], plotL = FALSE)
+plot(m, parAsColFcVn = d$y)
+
+tbl <- table(fit = fitted(m), ref = d[, y])
+# precision(tbl)
+recall(tbl, relevant = "1")
+
+##
+
+# info <- map(lst[2:3], group_diab) %>% map("is_diab") %>% as.data.table()
+# tbl  <- table(info)
 
 # pvalue < 0.05, 则x-y相互非独立
 r <- chisq.test(tbl) # "spearman
 
+# t.test 均值检测
+# aov: 方差
 
+
+## 均值, 方差检验--------------------------------------------------------------
+
+summary_fun <- function(x){
+    mean <- mean(x, na.rm = TRUE)
+    sd <- sd(x, na.rm = TRUE)
+    sprintf("%.1f ± %.1f", mean, sd)
+}
+
+varnames <- colnames(d)[-1] %>% set_names(., .)
+info <- d[, lapply(.SD, summary_fun), .(y),.SDcols = varnames]
+
+grp <- d$y
+pvals <-foreach(var = varnames) %do% {
+    x <- d[[var]]
+    x0 <- x[grp == 0] # non-diat
+    x1 <- x[grp == 1] # non-diat
+    r <- t.test(x0, x1)
+    r$p.value
+} %>% unlist()
+
+vars_sig <- varnames[pvals < 0.05]
 ## 1. --------------------------------------------------------------------------
 
-
-match2(df2$id_full, lst$current$id_full)
+m <- opls(d[, -1], d[, y], predI = 2, orthoI = 1)
 
