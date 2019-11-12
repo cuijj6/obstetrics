@@ -78,9 +78,9 @@ recall(tbl, relevant = "1")
 m <- opls(d[, -1], plotL = FALSE)
 plot(m, parAsColFcVn = d$y)
 
-tbl <- table(fit = fitted(m), ref = d[, y])
-# precision(tbl)
-recall(tbl, relevant = "1")
+# tbl <- table(fit = fitted(m), ref = d[, y])
+# # precision(tbl)
+# recall(tbl, relevant = "1")
 
 ##
 
@@ -118,4 +118,3 @@ vars_sig <- varnames[pvals < 0.05]
 ## 1. --------------------------------------------------------------------------
 
 m <- opls(d[, -1], d[, y], predI = 2, orthoI = 1)
-

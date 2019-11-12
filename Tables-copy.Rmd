@@ -1,0 +1,102 @@
+---
+title: "Tables"
+author: "Dongdong Kong"
+date: "2019/10/13"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r cars}
+source("test/main_pkgs.R")
+devtools::load_all()
+last_row <- . %>% .[nrow(.), ]
+
+fix_height <- function(d) {
+    height1 <- d$height1
+    height2 <- d$height2
+
+    I <- is.na(height1)
+    height1[I] <- height2[I]
+
+    I <- is.na(height2)
+    height2[I] <- height1[I]
+
+    d$height1 <- height1
+    d$height2 <- height2
+    d
+}
+
+BMI <- function(height, weight){
+    weight/(height/100)^2
+}
+
+df <- read_xlsx("INPUT/GDM复发_final_20191013.xlsx") %>% data.table()
+df[, GDM := factor(GDM_1 * 2 + GDM_2, 0:3, c("health", "new", "No Recurrence", "Recurrence"))]
+df <- df[GDM %in% c("Recurrence", "No Recurrence"), ] %>% fix_height()
+
+df %<>% plyr::mutate(
+    delvdate1 = ymd(delvdate1), 
+    delvdate2 = ymd(delvdate2), 
+    Interval_deli = as.numeric(difftime(delvdate2, delvdate1, units = "days")/30),
+    # 
+    BMI_befo2 = BMI(height2, wght_b2), 
+    BMI_deli2 = BMI(height2, wght_d2), 
+    BMI_befo1 = BMI(height1, wght_b1), 
+    BMI_deli1 = BMI(height1, wght_d1), 
+    delta_BMI_befo = BMI_befo2 - BMI_befo1, 
+    delta_BMI_deli = BMI_deli2 - BMI_deli1, 
+    delta_wght2     = wght_d2 - wght_b2, 
+    delta_wght_befo = wght_b2 - wght_b1, 
+    delta_wght_deli = wght_d2 - wght_d1, 
+    OGTT1_0_d = as.numeric(OGTT1_0_d)
+    )
+names(df)
+# View(d_diff)
+```
+
+```{r}
+# c("GDM_1", "GDM_2", "group", "admin", "serinum", "name", "birth", 
+# "age2", "delvdate2", "famhis2", "insulin2", "hypoins2", "gender2_1", "weight2_1", "brth2_1", "out2_1", "gender2_2", "weight2_2", "brth2_2", "out2_2", "ptimes2", "dtimes2", "pweek2", "pday2", "mode2", "wght_b2", "wght_d2", "height2", "diagn2", "hist2", "HBA2_d", "OGTT2_0_d", "OGTT2_1_d", "OGTT2_2_d", "CHOL2_d", "TG2_d", "HDL2_d", "LDL2_d", "uglu2_d", "pro2_d", "GLU2_d", "HBA2_a", 
+# "OGTT2_0_a", "OGTT2_1_a", "OGTT2_2_a", "CHOL2_a", "TG2_a", "HDL2_a", "LDL2_a", "insu2_0_a", "uglu2_1_a", "uglu2_2_a", 
+# # Index
+# "age1", "delvdate1", "gender1_1", "weight1_1", "brth1_1", "out1_1", "gender1_2", "weight1_2", "brth1_2", "out1_2", "insulin1", "hypoins1", "ptimes1", "dtimes1", "pweek1", "pday1", "mode1", "wght_b1", "wght_d1", "height1", "diagn1", "pdiagn1", "hist1", "HBA1_d", "OGTT1_0_d", "OGTT1_1_d", "OGTT1_2_d", "OGTT1_3_d", "CHOL1_d", "TG1_d", "HDL1_d", "LDL1_d", "GDM")
+```
+
+
+```{r}
+df$his <- tidy_his(df$famhis2)
+df$mode <- tidy_mode(df$mode2)
+
+# -d: pregnancy (only for OGTT)
+# -a: after
+# df[, .(height1,height2)]
+varnames = c(
+    "his", "mode",
+    "Interval_deli", 
+    "age2", "ptimes2", "dtimes2",
+    # 2. 体重信息
+    "wght_b2", "wght_d2",
+    "delta_wght2",
+    "delta_wght_befo",
+    "delta_wght_deli",
+    # BMI
+    "BMI_befo2", "BMI_deli2",
+    "delta_BMI_deli",
+    "delta_BMI_befo",
+    # 3. 测量指标
+    "OGTT1_0_d", "OGTT1_1_d", "OGTT1_2_d", 
+    "CHOL2_d", "TG2_d", "HDL2_d", "LDL2_d"
+    ) %>% set_names(., .)
+lst <- foreach(indicator = varnames) %do% {
+    basinInfo(df, indicator)    
+}
+
+info <- melt_list(lst, "variales")
+# write_list2xlsx(list("basinInfo" = info), "Table.1 BasicInfo2.xlsx")
+info
+```

@@ -22,3 +22,23 @@ rename_items <- function(d){
     # x <- mat[, 5:12]
     # I_bad <- apply(x > 1, 1, any) %>% which()
 }
+
+
+match2 <- function (x, y) 
+{
+    class_x = class(x)[1]
+    class_y = class(y)[1]
+    if (class_x != class_y) {
+        stop("class of x and y is different!")
+    } else if (is.data.frame(x)) {
+        x = do.call(paste, x)
+        y = do.call(paste, y)    
+    }
+
+    I <- match(x, y)
+    I_x <- which.notna(I)
+    I_y <- I[I_x]
+    d <- data.table(x = x[I_x], y = y[I_y], I_x, I_y, grp = cumsum(c(TRUE, 
+        diff(I_y) != 1)))
+    d
+}

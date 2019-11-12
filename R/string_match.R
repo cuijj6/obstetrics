@@ -31,17 +31,23 @@ extract_ill <- function(x){
     his
 }
 
+get_ills <- function(d) {
+    # 出院诊断
+    out_mat <- d[, .SD, .SDcols = grep("出院诊断", colnames(d))] %>% as.matrix()
+    out_mat[is.na(out_mat)] <- ""
+    out_judge <- apply(out_mat, 1, function(x) {
+        paste0(x, collapse = "; ")
+    })
+    
+    his_diabetes <- d$既往史 %>% extract_ill()
+    out_judge_diabetes <- out_judge %>% extract_ill()
+    data.table(his_diabetes, out_judge_diabetes)
+}
 #' extractBasicInfo
 #'
 #' @export
 extractBasicInfo <- function(d){
-    # 出院诊断
-    out_mat <- d[, .SD, .SDcols = grep("出院诊断", colnames(d))] %>% as.matrix()
-    out_mat[is.na(out_mat)] <- ""
-    out_judge <- apply(out_mat, 1, function(x){ paste0(x, collapse = "; ") })
-
-    his_diabetes <- d$既往史 %>% extract_ill()
-    out_judge_diabetes <- out_judge %>% extract_ill()
+    d_ill <- get_ills(d)
 
     info_period <- d$孕次产次孕周 %>% extract_period()
     info_BMI    <- d$体格检查 %>% extract_BMI()

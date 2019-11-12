@@ -2,6 +2,16 @@ library(randomForest)
 library(caret)
 library(keras)
 
+metric <- function(tbl) {
+    if (nrow(tbl) < 2) {
+        print(tbl)
+        return(NULL)
+    }
+    recall    <- recall(tbl, relevant = "1")
+    precision <- precision(tbl, relevant  = "1") # 预测结果中正确部分
+    listk(recall, precision)
+}
+
 set.seed(1)
 # data <- d
 data <- d
@@ -101,16 +111,6 @@ model %>% evaluate(x_test, y_test)
 # ---- results = 'hide'---------------------------------------------------
 z <- model %>% predict(x_test)
 # GOF(y_test, z)
-
-metric <- function(tbl) {
-    if (nrow(tbl) < 2) {
-        print(tbl)
-        return(NULL)
-    }
-    recall    <- recall(tbl, relevant = "1")
-    precision <- precision(tbl, relevant  = "1") # 预测结果中正确部分
-    listk(recall, precision)
-}
 
 # res <- model %>% { cbind(ref = d[index, y], fit = predict_classes(., x_train)) }
 # tbl <- model %>% { table(fit = predict_classes(., x_train), ref = d[index, y] ) }
